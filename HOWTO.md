@@ -2,7 +2,7 @@ Note
 ====
 
 This code is now unmaintained. The replacement code for electrum
-server is ElectrumX: https://github.com/kyuupichan/electrumx
+server is ElectrumX: https://github.com/spesmilo/electrumx
 
 How to run your own Electrum server
 ===================================
