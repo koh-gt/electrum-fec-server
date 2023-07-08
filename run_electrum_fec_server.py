@@ -34,13 +34,13 @@ import imp
 
 
 if os.path.dirname(os.path.realpath(__file__)) == os.getcwd():
-    imp.load_module('electrumserver', *imp.find_module('src'))
+    imp.load_module('electrumfecserver', *imp.find_module('src'))
 
-from electrumserver import storage, networks, utils
-from electrumserver.processor import Dispatcher, print_log
-from electrumserver.server_processor import ServerProcessor
-from electrumserver.blockchain_processor import BlockchainProcessor
-from electrumserver.stratum_tcp import TcpServer
+from electrumfecserver import storage, networks, utils
+from electrumfecserver.processor import Dispatcher, print_log
+from electrumfecserver.server_processor import ServerProcessor
+from electrumfecserver.blockchain_processor import BlockchainProcessor
+from electrumfecserver.stratum_tcp import TcpServer
 
 
 logging.basicConfig()
@@ -86,7 +86,7 @@ def create_config(filename=None):
     # set some defaults, which will be overwritten by the config file
     config.add_section('server')
     config.set('server', 'banner', 'Welcome to Electrum!')
-    config.set('server', 'banner_file', '/etc/electrum.banner')
+    config.set('server', 'banner_file', '/etc/electrum-fec.banner')
     config.set('server', 'host', 'localhost')
     config.set('server', 'electrum_rpc_port', '8000')
     config.set('server', 'report_host', '')
@@ -98,12 +98,12 @@ def create_config(filename=None):
     config.set('server', 'ssl_keyfile', '')
     config.set('server', 'irc', 'no')
     config.set('server', 'irc_nick', '')
-    config.set('server', 'coin', '')
+    config.set('server', 'coin', 'ferrite')
     config.set('server', 'donation_address', '')
     config.set('server', 'max_subscriptions', '10000')
 
     config.add_section('leveldb')
-    config.set('leveldb', 'path', '/dev/shm/electrum_db')
+    config.set('leveldb', 'path', '/dev/shm/electrum-fec_db')
     config.set('leveldb', 'pruning_limit', '100')
     config.set('leveldb', 'reorg_limit', '100')
     config.set('leveldb', 'utxo_cache', str(64*1024*1024))
@@ -113,12 +113,12 @@ def create_config(filename=None):
 
     # set network parameters
     config.add_section('network')
-    config.set('network', 'type', 'bitcoin_main')
+    config.set('network', 'type', 'ferrite_main')
 
     # try to find the config file in the default paths
     if not filename:
         for path in ('/etc/', ''):
-            filename = path + 'electrum.conf'
+            filename = path + 'electrum-fec.conf'
             if os.path.isfile(filename):
                 break
 
