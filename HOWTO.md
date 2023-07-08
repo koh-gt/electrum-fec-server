@@ -18,7 +18,7 @@ requirements.
 
 The most up-to date version of this document is available at:
 
-    https://github.com/spesmilo/electrum-server/blob/master/HOWTO.md
+    https://github.com/koh-gt/electrum-fec-server/blob/master/HOWTO.md
 
 Conventions
 -----------
