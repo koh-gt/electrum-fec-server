@@ -59,7 +59,7 @@ class IrcThread(threading.Thread):
             self.nick = Hash(self.host)[:5].encode("hex")
         self.pruning = True
         self.pruning_limit = config.get('leveldb', 'pruning_limit')
-        self.nick = 'E_' + self.nick
+        self.nick = 'EF_' + self.nick
         self.password = None
         self.who_queue = Queue.Queue()
 
@@ -85,20 +85,20 @@ class IrcThread(threading.Thread):
         threading.Thread.start(self)
 
     def on_connect(self, connection, event):
-        connection.join("#electrum")
+        connection.join("#electrum-fec")
 
     def on_join(self, connection, event):
-        m = re.match("(E_.*)!", event.source)
+        m = re.match("(EF_.*)!", event.source)
         if m:
             self.who_queue.put((connection, m.group(1)))
 
     def on_quit(self, connection, event):
-        m = re.match("(E_.*)!", event.source)
+        m = re.match("(EF_.*)!", event.source)
         if m:
             self.queue.put(('quit', [m.group(1)]))
 
     def on_kick(self, connection, event):
-        m = re.match("(E_.*)", event.arguments[0])
+        m = re.match("(EF_.*)", event.arguments[0])
         if m:
             self.queue.put(('quit', [m.group(1)]))
 
@@ -120,7 +120,7 @@ class IrcThread(threading.Thread):
 
     def on_name(self, connection, event):
         for s in event.arguments[2].split():
-            if s.startswith("E_"):
+            if s.startswith("EF_"):
                 self.who_queue.put((connection, s))
 
     def who_thread(self):
