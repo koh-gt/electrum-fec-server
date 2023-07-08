@@ -112,7 +112,7 @@ class BlockchainProcessor(Processor):
         while not self.shared.stopped():
             self.main_iteration()
             if self.shared.paused():
-                print_log("bitcoind is responding")
+                print_log("ferrited is responding")
                 self.shared.unpause()
             time.sleep(10)
 
@@ -130,8 +130,8 @@ class BlockchainProcessor(Processor):
         tx_per_second = (1-alpha2) * tx_per_second + alpha2 * num_tx / delta
         self.avg_time = seconds_per_block, tx_per_second, n+1
         if self.storage.height%100 == 0 \
-            or (self.storage.height%10 == 0 and self.storage.height >= 100000)\
-            or self.storage.height >= 200000:
+            or (self.storage.height%10 == 0 and self.storage.height >= 300000)\
+            or self.storage.height >= 1000000:
             msg = "block %d (%d %.2fs) %s" %(self.storage.height, num_tx, delta, self.storage.get_root_hash().encode('hex'))
             msg += " (%.2ftx/s, %.2fs/block)" % (tx_per_second, seconds_per_block)
             run_blocks = self.storage.height - self.start_catchup_height
@@ -160,12 +160,12 @@ class BlockchainProcessor(Processor):
                 r = load(response)
                 response.close()
             except:
-                print_log("cannot reach bitcoind...")
+                print_log("cannot reach ferrited...")
                 self.wait_on_bitcoind()
             else:
                 if r['error'] is not None:
                     if r['error'].get('code') == -28:
-                        print_log("bitcoind still warming up...")
+                        print_log("ferrited still warming up...")
                         self.wait_on_bitcoind()
                         continue
                     raise BaseException(r['error'])
@@ -575,7 +575,7 @@ class BlockchainProcessor(Processor):
                     #  it's considered an error message
                     message = error["message"]
                     if "non-mandatory-script-verify-flag" in message:
-                        result = "Your client produced a transaction that is not accepted by the Bitcoin network any more. Please upgrade to Electrum 2.5.1 or newer\n"
+                        result = "Your client produced a transaction that is not accepted by the Ferrite network any more. Please upgrade to Electrum 2.5.1 or newer\n"
                     else:
                         result = "The transaction was rejected by network rules.(" + message + ")\n" \
                             "[" + params[0] + "]"
@@ -625,13 +625,13 @@ class BlockchainProcessor(Processor):
                 r = load(response)
                 response.close()
             except:
-                logger.error("bitcoind error (getfullblock)")
+                logger.error("ferrited error (getfullblock)")
                 self.wait_on_bitcoind()
                 continue
             try:
                 rawtxdata = []
                 for ir in r:
-                    assert ir['error'] is None, "Error: make sure you run bitcoind with txindex=1; use -reindex if needed."
+                    assert ir['error'] is None, "Error: make sure you run ferrited with txindex=1; use -reindex if needed."
                     rawtxdata.append(ir['result'])
             except BaseException as e:
                 logger.error(str(e))
