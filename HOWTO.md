@@ -2,7 +2,7 @@ Note
 ====
 
 This code is now unmaintained. The replacement code for electrum
-server is ElectrumX: https://github.com/spesmilo/electrumx
+server is ElectrumX: https://github.com/koh-gt/electrum-fec-server
 
 How to run your own Electrum server
 ===================================
@@ -26,8 +26,8 @@ Conventions
 In this document, lines starting with a hash sign (#) or a dollar sign ($)
 contain commands. Commands starting with a hash should be run as root,
 commands starting with a dollar should be run as a normal user (in this
-document, we assume that user is called 'bitcoin'). We also assume the
-bitcoin user has sudo rights, so we use `$ sudo command` when we need to.
+document, we assume that user is called 'ferrite'). We also assume the
+ferrite user has sudo rights, so we use `$ sudo command` when we need to.
 
 Strings that are surrounded by "lower than" and "greater than" ( < and > )
 should be replaced by the user with something appropriate. For example,
@@ -59,96 +59,97 @@ build chain. You will need root access in order to install other software or
 Python libraries. Python 2.7 is the minimum supported version.
 
 **Hardware.** The lightest setup is a pruning server with disk space
-requirements of about 50 GB for the Electrum database (January 2017). However note that
+requirements of about 2 GB for the Electrum database (July 2023). However note that
 you also need to run bitcoind and keep a copy of the full blockchain,
-which is roughly 125 GB (January 2017). Ideally you have a machine with 16 GB of RAM
-and an equal amount of swap. If you have ~2 GB of RAM make sure you limit bitcoind 
-to 8 concurrent connections by disabling incoming connections. electrum-server may
-bail-out on you from time to time with less than 4 GB of RAM, so you might have to 
+which is roughly 3 GB (July 2023). Ideally you have a machine with 4 GB of RAM
+and an equal amount of swap. If you have ~2 GB of RAM make sure you limit ferrited 
+to 8 concurrent connections by disabling incoming connections. electrum-fec-server may
+bail-out on you from time to time with less than 2 GB of RAM, so you might have to 
 monitor the process and restart it. You can tweak cache sizes in the config to an extend
 but most RAM will be used to process blocks and catch-up on initial start.
 
-CPU speed is less important than fast I/O speed. electrum-server makes use of one core 
-only leaving spare cycles for bitcoind. Fast single core CPU power helps for the initial 
+CPU speed is less important than fast I/O speed. electrum-fec-server makes use of one core 
+only leaving spare cycles for ferrited. Fast single core CPU power helps for the initial 
 block chain import. Any multi-core x86 CPU with CPU Mark / PassMark > 1500 will work
-(see https://www.cpubenchmark.net/). An ideal setup in February 2016 has 16 GB+ RAM and
+(see https://www.cpubenchmark.net/). An ideal setup in November 2022 has 4 GB+ RAM and
 SSD for good i/o speed.
 
 Instructions
 ------------
 
-### Step 1. Create a user for running bitcoind and Electrum server
+### Step 1. Create a user for running ferrited and Electrum server
 
 This step is optional, but for better security and resource separation I
-suggest you create a separate user just for running `bitcoind` and Electrum.
+suggest you create a separate user just for running `ferrited` and Electrum.
 We will also use the `~/bin` directory to keep locally installed files
 (others might want to use `/usr/local/bin` instead). We will download source
 code files to the `~/src` directory.
 
-    $ sudo adduser bitcoin --disabled-password
+    $ sudo adduser ferrite --disabled-password
     $ sudo apt-get install git
-    $ sudo su - bitcoin
+    $ sudo su - ferrite
     $ mkdir ~/bin ~/src
     $ echo $PATH
 
-If you don't see `/home/bitcoin/bin` in the output, you should add this line
+If you don't see `/home/ferrite/bin` in the output, you should add this line
 to your `.bashrc`, `.profile`, or `.bash_profile`, then logout and relogin:
 
     PATH="$HOME/bin:$PATH"
     $ exit
 
-### Step 2. Download bitcoind
+### Step 2. Download ferrited
 
 We currently recommend bitcoin core 0.15.1 stable. If your package manager does not supply
 a recent bitcoind or you prefer to compile it yourself, here are some pointers for Ubuntu:
 
-    $ sudo apt-get install make bsdmainutils g++ python-leveldb libboost-all-dev libssl-dev libdb++-dev pkg-config libevent-dev
-    $ sudo su - bitcoin
-    $ cd ~/src && wget https://bitcoin.org/bin/bitcoin-core-0.15.1/bitcoin-0.15.1.tar.gz
-    $ sha256sum bitcoin-0.15.1.tar.gz | grep 34de2dbe058c1f8b6464494468ebe2ff0422614203d292da1c6458d6f87342b4
-    $ tar xfz bitcoin-0.15.1.tar.gz
-    $ cd bitcoin-0.15.1
-    $ ./configure --disable-wallet --without-miniupnpc
-    $ make
-    $ strip src/bitcoind src/bitcoin-cli src/bitcoin-tx
-    $ cp -a src/bitcoind src/bitcoin-cli src/bitcoin-tx ~/bin
+    $ sudo apt-get install build-essential libtool autotools-dev automake pkg-config bsdmainutils python3 libssl-dev libevent-dev libboost-system-dev libboost-filesystem-dev libboost-test-dev libboost-thread-dev libfmt-dev libsqlite3-dev libminiupnpc-dev libzmq3-dev
+    $ sudo su - ferrite
+    $ cd ~/src && git clone https://github.com/koh-gt/ferrite-core/tree/ferrite-main
+    $ sudo chmod +x -R ferrite-core-ferrite-main
+    $ cd ferrite-core-ferrite-main
+    $ ./autogen.sh
+    $ ./configure --with-incompatible-bdb --with-miniupnpc --enable-upnp-default --with-natpmp
+    $ make -j$(nproc) # or "make" for single core CPUs
+    $ strip src/ferrited src/ferrite-cli src/ferrite-tx
+    $ cp -a src/ferrited src/ferrite-cli src/ferrite-tx ~/bin
 
 ### Step 3. Configure and start bitcoind
 
-In order to allow Electrum to "talk" to `bitcoind`, we need to set up an RPC
-username and password for `bitcoind`. We will then start `bitcoind` and
+In order to allow Electrum to "talk" to `ferrited`, we need to set up an RPC
+username and password for `ferrited`. We will then start `ferrited` and
 wait for it to complete downloading the blockchain.
 
-    $ mkdir ~/.bitcoin
-    $ $EDITOR ~/.bitcoin/bitcoin.conf
+    $ mkdir ~/.ferrite
+    $ $EDITOR ~/.ferrite/ferrite.conf
 
-Write this in `bitcoin.conf`:
+Write this in `ferrite.conf`:
 
     daemon=1
     txindex=1
+    disablewallet=1
 
 rpcuser / rpcpassword options are only needed for non-localhost connections.
-you can consider setting maxconnections if you want to reduce bitcoind bandwidth
+you can consider setting maxconnections if you want to reduce ferrited bandwidth
 (as stated above)
 
-If you have an existing installation of bitcoind and have not previously
+If you have an existing installation of ferrited and have not previously
 set txindex=1 you need to reindex the blockchain by running
 
-    $ bitcoind -reindex
+    $ ferrited -reindex
 
-If you already have a freshly indexed copy of the blockchain with txindex start `bitcoind`:
+If you already have a freshly indexed copy of the blockchain with txindex start `ferrited`:
 
-    $ bitcoind
+    $ ferrited
 
-Allow some time to pass for `bitcoind` to connect to the network and start
+Allow some time to pass for `ferrited` to connect to the network and start
 downloading blocks. You can check its progress by running:
 
-    $ bitcoin-cli getblockchaininfo
+    $ ferrite-cli getinfo
 
-Before starting the Electrum server your bitcoind should have processed all
+Before starting the Electrum server your ferrited should have processed all
 blocks and caught up to the current height of the network (not just the headers).
-You should also set up your system to automatically start bitcoind at boot
-time, running as the 'bitcoin' user. Check your system documentation to
+You should also set up your system to automatically start ferrited at boot
+time, running as the 'ferrite' user. Check your system documentation to
 find out the best way to do this.
 
 ### Step 4. Download and install Electrum server
@@ -156,8 +157,8 @@ find out the best way to do this.
 We will download the latest git snapshot for Electrum to configure and install it:
 
     $ cd ~
-    $ git clone https://github.com/spesmilo/electrum-server.git
-    $ cd electrum-server
+    $ git clone https://github.com/koh-gt/electrum-fec-server.git
+    $ cd electrum-fec-server
     $ sudo apt-get install python-setuptools
     $ sudo ./configure
     $ sudo python setup.py install
@@ -215,7 +216,7 @@ https://foundry.electrum.org/
 
 Alternatively, if you have the time and nerve, you can import the blockchain yourself.
 
-As of April 2014 it takes between two days and over a week to import 300k blocks, depending
+As of July 2023 it takes between two minutes and over an hour to import 150k blocks, depending
 on CPU speed, I/O speed, and your selected pruning limit.
 
 It's considerably faster and strongly recommended to index in memory. You can use /dev/shm or
@@ -223,15 +224,15 @@ or create a tmpfs which will also use swap if you run out of memory:
 
     $ sudo mount -t tmpfs -o rw,nodev,nosuid,noatime,size=15000M,mode=0777 none /tmpfs
 
-If you use tmpfs make sure you have enough RAM and swap to cover the size. If you only have 4 GB of
+If you use tmpfs make sure you have enough RAM and swap to cover the size. If you only have 2 GB of
 RAM but add 15 GB of swap from a file that's fine too; tmpfs is smart enough to swap out the least
 used parts. It's fine to use a file on an SSD for swap in this case.
 
 It's not recommended to do initial indexing of the database on an SSD because the indexing process
-does at least 20 TB (!) of disk writes and puts considerable wear-and-tear on an SSD. It's a lot better
+does at least 10 TB (!) of disk writes and puts considerable wear-and-tear on an SSD. It's a lot better
 to use tmpfs and just swap out to disk when necessary.
 
-Databases have grown to roughly 30 GB as of February 2016. Leveldb prunes the database from time to time,
+Databases have grown to roughly 1 GB as of July 2023. Leveldb prunes the database from time to time,
 so it's not uncommon to see databases ~50% larger at times when it's writing a lot, especially when
 indexing from the beginning.
 
@@ -278,11 +279,11 @@ in case you need to restore them.
 
 ### Step 9. Configure Electrum server
 
-Electrum reads a config file (/etc/electrum.conf) when starting up. This
-file includes the database setup, bitcoind RPC setup, and a few other
+Electrum reads a config file (/etc/electrum-fec.conf) when starting up. This
+file includes the database setup, ferrited RPC setup, and a few other
 options.
 
-The "configure" script listed above will create a config file at /etc/electrum.conf
+The "configure" script listed above will create a config file at /etc/electrum-fec.conf
 which you can edit to modify the settings.
 
 Go through the config options and set them to your liking.
@@ -294,12 +295,12 @@ Electrum server currently needs quite a few file handles to use leveldb. It also
 file handles for each connection made to the server. It's good practice to increase the
 open files limit to 128k.
 
-The "configure" script will take care of this and ask you to create a user for running electrum-server.
-If you're using the user `bitcoin` to run electrum and have added it as shown in this document, run
+The "configure" script will take care of this and ask you to create a user for running electrum-fec-server.
+If you're using the user `ferrite` to run electrum and have added it as shown in this document, run
 the following code to add the limits to your /etc/security/limits.conf:
 
-     echo "bitcoin hard nofile 131072" >> /etc/security/limits.conf
-     echo "bitcoin soft nofile 131072" >> /etc/security/limits.conf
+     echo "ferrite hard nofile 131072" >> /etc/security/limits.conf
+     echo "ferrite soft nofile 131072" >> /etc/security/limits.conf
 
 If you are on Debian > 8.0 Jessie or another distribution based on it, you also need to add these lines in /etc/pam.d/common-session and /etc/pam.d/common-session-noninteractive otherwise the limits in /etc/security/limits.conf will not work:
 
@@ -308,30 +309,30 @@ If you are on Debian > 8.0 Jessie or another distribution based on it, you also 
 
 Check if the limits are changed either by logging with the user configured to run Electrum server as. Example:
 
-    su - bitcoin
+    su - ferrite
     ulimit -n
 
 Or if you use sudo and the user is added to sudoers group:
 
-    sudo -u bitcoin -i ulimit -n
+    sudo -u ferrite -i ulimit -n
 
 
 Two more things for you to consider:
 
 1. To increase privacy of transactions going through your server
-   you may want to close bitcoind for incoming connections and connect outbound only. Most servers do run
+   you may want to close ferrited for incoming connections and connect outbound only. Most servers do run
    full nodes with open incoming connections though.
 
-2. Consider restarting bitcoind (together with electrum-server) on a weekly basis to clear out unconfirmed
+2. Consider restarting ferrited (together with electrum-fec-server) on a weekly basis to clear out unconfirmed
    transactions from the local the memory pool which did not propagate over the network.
 
 ### Step 11. (Finally!) Run Electrum server
 
 The magic moment has come: you can now start your Electrum server as root (it will su to your unprivileged user):
 
-    # electrum-server start
+    # electrum-fec-server start
 
-Note: If you want to run the server without installing it on your system, just run 'run_electrum_server" as the
+Note: If you want to run the server without installing it on your system, just run 'run_electrum_fec_server" as the
 unprivileged user.
 
 You should see this in the log file:
@@ -346,15 +347,15 @@ The important pieces to you are at the end. In this example, the server has to c
 
 If you want to stop Electrum server, use the 'stop' command:
 
-    # electrum-server stop
+    # electrum-fec-server stop
 
 
-If your system supports it, you may add electrum-server to the /etc/init.d directory.
+If your system supports it, you may add electrum-fec-server to the /etc/init.d directory.
 This will ensure that the server is started and stopped automatically, and that the database is closed
 safely whenever your machine is rebooted.
 
-    # ln -s `which electrum-server` /etc/init.d/electrum-server
-    # update-rc.d electrum-server defaults
+    # ln -s `which electrum-fec-server` /etc/init.d/electrum-fec-server
+    # update-rc.d electrum-fec-server defaults
 
 ### Step 12. Test the Electrum server
 
@@ -367,16 +368,17 @@ or hostname and the port. Press 'Ok' and the client will disconnect from the
 current server and connect to your new Electrum server. You should see your
 addresses and transactions history. You can see the number of blocks and
 response time in the server selection window. You should send/receive some
-bitcoins to confirm that everything is working properly.
+ferritecoins to confirm that everything is working properly.
 
-### Step 13. Join us on IRC, subscribe to the server thread
-
-Say hi to the dev crew, other server operators, and fans on
-irc.freenode.net #electrum and we'll try to congratulate you
-on supporting the community by running an Electrum node.
+### Step 13. Join us on Telegram/Discord
 
 If you're operating a public Electrum server please subscribe
-to or regularly check the following thread:
-https://bitcointalk.org/index.php?topic=85475.0
-It'll contain announcements about important updates to Electrum
+to or regularly check the following groups:
+https://t.me/ferrite_core
+https://t.me/ferritext
+https://discord.gg/qKgF5xhS5p
+https://twitter.com/ferritecoin
+https://www.reddit.com/r/Ferritecoin
+
+It'll contain announcements about important updates to Electrum-FEC
 server required for a smooth user experience.
