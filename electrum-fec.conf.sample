@@ -11,13 +11,13 @@ stratum_tcp_port = 50001
 #report_stratum_tcp_port = 50001
 #report_stratum_tcp_ssl_port = 50002
 banner = Welcome to Electrum!
-banner_file = /etc/electrum.banner
+banner_file = /etc/electrum-fec.banner
 #irc = no
 #irc_nick = <yournickname>
 #irc_bind_ip = <external ip address>
 #ssl_certfile = /path/to/electrum-server.crt
 #ssl_keyfile = /path/to/electrum-server.key
-logfile = /var/log/electrum.log
+logfile = /var/log/electrum-fec.log
 donation_address =
 
 [leveldb]
@@ -34,7 +34,7 @@ pruning_limit = 100
 
 [bitcoind]
 bitcoind_host = localhost
-bitcoind_port = 8332
-# user and password from bitcoin.conf (not needed for localhost)
+bitcoind_port = 9573
+# user and password from ferrite.conf (not needed for localhost)
 #bitcoind_user =
 #bitcoind_password =
