@@ -41,7 +41,7 @@ Patricia tree for hashing unspents
 
 # increase this when database needs to be updated
 global GENESIS_HASH
-GENESIS_HASH = '000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f'
+GENESIS_HASH = '46ca17415c18e43f5292034ebf9bbd10de80a61fc6dc17180e6609f33d3b48f3'
 DB_VERSION = 3
 KEYLENGTH = 56   # 20 + 32 + 4
 
@@ -286,7 +286,7 @@ class Storage(object):
     def listunspent(self, addr):
         key = self.address_to_key(addr)
         if key is None:
-            raise BaseException('Invalid Bitcoin address', addr)
+            raise BaseException('Invalid Ferrite address', addr)
         out = []
         with self.db_utxo.lock:
             for k, v in self.db_utxo.db.iterator(start=key):
