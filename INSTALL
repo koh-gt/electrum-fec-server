@@ -5,22 +5,22 @@ detailed information on how to configure your server.
 TLDR:
 $ sudo ./configure
 $ sudo python ./setup.py install
-$ electrum-server start
-$ electrum-server stop
+$ electrum-fec-server start
+$ electrum-fec-server stop
 
 
 Note: If you want to run the server without installing it on your
-system, just run 'run_electrum_server"
+system, just run 'run_electrum_fec_server"
 
 
-1. Install and run bitcoind.
+1. Install and run ferrited.
 ----------------------------
 
-You will need to run bitcoind with the config option txindex=1. If you
-have not previously done so, you may need to reindex the bitcoind
+You will need to run ferrited with the config option txindex=1. If you
+have not previously done so, you may need to reindex the ferrited
 blockchain
 
-Note: you cannot use a pruning bitcoind.  A full bitcoin node is
+Note: you cannot use a pruning ferrited.  A full ferrite node is
 required in order to know for each address if it has been
 used. Pruning occurs only at the level of the Electrum database.
 
@@ -32,14 +32,14 @@ You need to run the script as root:
 $ sudo ./configure
 
 It will:
- * create the configuration file in /etc/electrum.conf
+ * create the configuration file in /etc/electrum-fec.conf
  * create a user that will run the daemon
- * optionally, download a fresh database from the Electrum Foundry.
+ * optionally, download a fresh database from the Electrum-FEC Foundry.
 
 If you choose not to use the Foundry, your server will have to build
 the database from scratch. This process can take several days. To
 speed it up, it is recommended to locate your database in shared
-memory, in electrum.conf: path = /run/shm/electrum_db
+memory, in electrum-fec.conf: path = /run/shm/electrum-fec_db
 
 Note: The 'configure' script does not configure SSL and IRC. You will
 need to manually edit the configuration file in order to enable SSL on
@@ -57,31 +57,31 @@ Note: You will need to redo this everytime you pull code from git.
 4. Using the server
 -------------------
 
-Use 'electrum-server' to start and stop the server:
+Use 'electrum-fec-server' to start and stop the server:
 
-$ electrum-server <start|stop|restart|status|getinfo|peers|numpeers|sessions|numsessions|banner_update>
+$ electrum-fec-server <start|stop|restart|status|getinfo|peers|numpeers|sessions|numsessions|banner_update>
 
 The server will write a log file in its database path.
 
 
-5. Add electrum-server to your system's services
-------------------------------------------------
+5. Add electrum-fec-server to your system's services
+----------------------------------------------------
 
-If your system supports it, you may add electrum-server to the
+If your system supports it, you may add electrum-fec-server to the
 /etc/init.d directory. This will ensure that the server is started and
 stopped automatically, and that the database is closed safely whenever
 your machine is rebooted.
 
-# ln -s `which electrum-server` /etc/init.d/electrum-server
-# update-rc.d electrum-server defaults
+# ln -s `which electrum-fec-server` /etc/init.d/electrum-fec-server
+# update-rc.d electrum-fec-server defaults
 
 
 
 6. Troubleshooting:
 -------------------
 
- * if your server or bitcoind is killed because is uses too much
-   memory, configure bitcoind to limit the number of connections
+ * if your server or ferrited is killed because is uses too much
+   memory, configure ferrited to limit the number of connections
 
  * if you see "Too many open files" errors, you may need to increase
    your user's File Descriptors limit. For this, see
